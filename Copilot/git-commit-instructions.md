@@ -59,7 +59,7 @@ feat(grpc): `GetMatchHistory` RPC 엔드포인트 구현
 - Focus on explaining the 'Why' and 'How' rather than just 'What'.
 - Wrap at 72 characters per line.
 - Write in Korean, but keep all technical keywords, design patterns, and framework names in their original terms.
-
+- Write the body as a bullet list using informal Korean tone.
 
 ## Footer Guidelines
 
