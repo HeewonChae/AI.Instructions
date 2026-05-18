@@ -60,7 +60,7 @@ feat(grpc): `GetMatchHistory` RPC 엔드포인트 구현
 - Wrap at 72 characters per line.
 - Write in Korean, but keep all technical keywords, design patterns, and framework names in their original terms.
 - Write the body as a bullet list using informal Korean tone.
-- End each bullet sentence in Korean with `-음` or `-슴` style (e.g., `삭제했음`, `적용했음`).
+- Write the body as a bullet list using an imperative tone in Korean (e.g., "추가", "수정", "제거", "개선").
 
 ## Footer Guidelines
 

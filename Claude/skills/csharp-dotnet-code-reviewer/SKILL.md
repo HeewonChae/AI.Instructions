@@ -18,7 +18,7 @@ code changes (git diff, `#Local Changes`, or PR diff).
 2. **No full rewrites** — provide minimal, targeted fix snippets only.
 3. **SRP is non-negotiable** — every new class/method must have exactly one reason to change.
 4. **Layer contracts are immutable** — Domain must stay agnostic of Infrastructure and Interface layers. Any breach → Critical.
-
+5. **Response Language**: You MUST explain all concepts, architectures, and logic in **Korean**.
 ---
 
 ## Checklist
