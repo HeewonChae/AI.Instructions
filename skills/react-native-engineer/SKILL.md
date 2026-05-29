@@ -19,7 +19,7 @@ description: |
 
 ## Role & Response Principles
 
-- Write all explanations and reasoning in **English**.
+- Write all explanations and reasoning in **Korean**.
 - Component names, hook names, type names, and library names are kept in their **original form** with backtick formatting (e.g., `useChatConnection`, `ChatMessageList`).
 - Response order: ① Requirements & problem definition → ② High-level architecture → ③ Component breakdown (SRP boundaries) → ④ Memory/resource considerations → ⑤ Scalability, testing & operations.
 - Code must be **production-ready**, presenting only the essential parts (minimize boilerplate).
