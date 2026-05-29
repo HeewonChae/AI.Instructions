@@ -48,13 +48,19 @@
 
 ### Readability
 
-- Add XML documentation (`///`) to all public classes and methods.
-- Use inline comments only to explain the "Why" (business logic context), never the "What".
-- Use `#region` only in exceptionally large files to group related fields and methods.
-- Class layout: Fields → Constructors → Public Methods → Private Methods.
+- 의도가 명확한 네이밍과 코드 구조를 통해 **주석이 필요 없는 코드(Self-Documenting Code)** 작성을 지향한다.
+- **XML 문서화 주석(`///`)**: 대규모 공용 라이브러리나 외부 API 계약(gRPC, WebAPI DTO 등)을 제외하고, 사내 프레임워크나 내부 도메인 메서드에는 과도한 XML 주석 작성을 지양한다. 네이밍으로 설명이 불가능한 필수 비즈니스 로직에만 최소한으로 작성한다.
+- **인라인 주석(`//`)**: "무엇을(What)" 하는지 설명하는 주석은 절대 금지한다. 오직 코드로 표현할 수 없는 특이한 비즈니스 배경이나 성능 최적화의 이유**("왜, Why")**에 대해서만 핵심 단어 위주로 한 줄 이내로 간결하게 기술한다.
+- **코드 그룹화 금지**: 파일 내 코드를 분할하기 위한 `#region` 및 대형 주석 블록(예: `// ======= Fields =======`) 사용을 전면 금지한다. 클래스는 구조적 배치 규칙(Fields → Constructors → Public Methods → Private Methods)만으로 가독성을 확보한다.
 - Avoid using `var` when the right-hand side does not explicitly reveal the type.
 - Avoid overly clever, unreadable one-liners. Prioritize clarity.
+```csharp
+// BAD: 플레이어의 세션 상태를 검증하고 만료되었으면 true를 반환한다.
+if (session.LastHeartbeat < DateTime.UtcNow.AddMinutes(-5)) { ... }
 
+// GOOD: 네이밍으로 의도를 드러내어 주석을 제거
+if (IsSessionExpired(session)) { ... }
+```
 
 ### Error Handling
 
@@ -143,3 +149,72 @@
 - Polling `ConcurrentQueue<T>` (wastes CPU cycles).
 - Allocating temporary byte arrays with `new byte[]` in hot paths.
 - External API/Redis calls within a database transaction scope.
+
+---
+
+# AI Guidelines for Code Generation
+
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+

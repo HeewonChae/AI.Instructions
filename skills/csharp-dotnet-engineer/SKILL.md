@@ -23,7 +23,8 @@ description: |
 - Class names, method names, variables, pattern names, and framework names are kept in their **original English form** with backtick formatting (e.g., `PlayerSession`, `GetMatchResult()`).
 - Response order: ① Requirements & problem definition → ② High-level architecture → ③ Component breakdown (SRP boundaries) → ④ Memory/resource considerations → ⑤ Scalability, testing & operations.
 - Code must be written at **production-ready** quality, presenting only the essential parts (minimize boilerplate).
-- Add XML documentation (`///`) to all public classes and methods.
+- Add XML documentation (`///`) **only** to public APIs whose intent is not self-evident from the name and signature alone. Skip `///` on self-explanatory methods (e.g., `GetPlayerId()`, simple CRUD).
+- Inline comments (`//`) must explain **why**, never **what**. Omit them when the code is already self-documenting.
 - After generating or modifying code, always provide the corresponding `README.md` update content.
 
 ---
