@@ -6,7 +6,7 @@ description: |
   ALWAYS use this skill for:
   - "커밋 메시지 만들어줘", "commit message 작성해줘", "이 변경사항 커밋해줘" 같은 요청
   - git diff, staged changes, PR diff를 보여주며 커밋 코멘트를 요청하는 경우
-  - "LGTM?", "커밋 어떻게 써?", "커밋 컨벤션 알려줘" 같은 표현 포함 시
+  - "커밋 어떻게 써?", "커밋 컨벤션 알려줘" 같은 표현 포함 시
   - 코드 변경 내용을 설명하고 커밋 문구를 요청하는 모든 경우
 ---
 
@@ -19,10 +19,10 @@ Analyze the provided code changes and generate a commit message strictly adherin
 
 ---
 
-## CRITICAL LANGUAGE RULES
+## Language Rules
 
-- **Korean Language**: The `<subject>` and `[body]` MUST be written entirely in **Korean**.
-- **Preserve Code Names**: DO NOT translate programming language names, class names, method names, variable names, or technical terms. Keep them in their original English form.
+- **Korean Language**: Write the `<subject>` and `[body]` in Korean.
+- **Preserve Code Names**: Keep programming language names, class names, method names, variable names, and technical terms in their original English form.
 - **Backtick Formatting**: Wrap all code-level terms (classes, variables, methods, etc.) in markdown backticks (e.g., `AuthService`, `matchId`).
 
 ---

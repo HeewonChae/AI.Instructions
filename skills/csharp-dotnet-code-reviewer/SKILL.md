@@ -17,8 +17,9 @@ code changes (git diff, `#Local Changes`, or PR diff).
 1. **Increments only** — analyze `+` lines (added/modified). Ignore unchanged context unless new code directly breaks it.
 2. **No full rewrites** — provide minimal, targeted fix snippets only.
 3. **SRP is non-negotiable** — every new class/method must have exactly one reason to change.
-4. **Layer contracts are immutable** — Domain must stay agnostic of Infrastructure and Interface layers. Any breach → Critical.
-5. **Response Language**: You MUST explain all concepts, architectures, and logic in **Korean**.
+4. **Layer contracts follow the codebase** — where a Domain layer exists, it must stay agnostic of Infrastructure and Interface layers; a breach there → Critical. Don't flag missing layers in a codebase that doesn't have them, or in a single-function change or bug fix.
+5. **No new dependencies** — suggest a package or pattern the project doesn't already use only when the fix can't be done without it, and state its adoption cost.
+6. **Response Language**: Write all explanations in Korean.
 ---
 
 ## Checklist
@@ -45,7 +46,7 @@ code changes (git diff, `#Local Changes`, or PR diff).
 - Fire-and-forget `Task` with no exception observation.
 - `Task`-returning method with no `await` → remove async state machine; return directly or use `ValueTask`.
 
-#### 🏛️ Architectural Layer Breach
+#### 🏛️ Architectural Layer Breach (only where these layers exist)
 - Domain entity/service referencing `DbContext`, Redis, `HttpClient`, or serialization libs.
 - Application layer writing directly to DB, bypassing domain logic.
 - Controller/Handler containing business rule branches → delegate to Application layer.
@@ -64,15 +65,16 @@ code changes (git diff, `#Local Changes`, or PR diff).
 
 #### 🔥 Hot Path Allocation
 - LINQ (`Select`, `Where`, `ToList`, etc.) inside game ticks, tight loops, or per-packet handlers → `for`/`foreach` over pre-allocated collections or `Span<T>`.
-- String interpolation (`$"..."`) in hot methods → `string.Create`, `StringBuilder`, or `ZString`.
+- String interpolation (`$"..."`) in hot methods → `string.Create`, `StringBuilder`, or `ZString` if the project already uses it.
 - Value type boxing via interface cast or `object` parameter on hot paths.
 - Closures capturing `this`/locals inside loops → heap allocation per iteration.
 - `params` arrays or `new T[]` at high-frequency call sites.
 
 #### 🏊 Missing Pooling
-- `byte[]` allocated per-operation → `ArrayPool<byte>.Shared.Rent` / `Return`.
+Only on hot paths (per packet, per tick, per frame, or a stated high RPS) or where GC pressure is measured; elsewhere the plain allocation is correct.
+- `byte[]` allocated per packet or tick → `ArrayPool<byte>.Shared.Rent` / `Return`.
 - High-frequency domain/DTO instantiation → `ObjectPool<T>` (Microsoft.Extensions.ObjectPool).
-- `MemoryStream` without pooled backing → `RecyclableMemoryStream` (Microsoft.IO).
+- `MemoryStream` without pooled backing → `RecyclableMemoryStream` (Microsoft.IO) if the project already references it.
 - `StringBuilder` re-created in loops → pool or reuse.
 
 #### ⚙️ Task & ValueTask Overhead
@@ -81,7 +83,7 @@ code changes (git diff, `#Local Changes`, or PR diff).
 - Multiple `await`s in a loop where `Task.WhenAll` + batching reduces context-switch overhead.
 
 #### 🧱 Structural & Maintainability
-- **Code Duplication**: Same logic in ≥2 places → extract to utility, extension method, or domain service.
+- **Code Duplication**: Same logic in 3+ places, or in 2 places when the block is non-trivial and both copies change for the same reason → extract to an extension method or domain service. Blocks that look alike but change for different reasons are not duplication.
 - **God Methods**: >~30 LOC or multiple conceptual operations → split by SRP.
 - **Primitive Obsession**: Raw `int`/`string`/`Guid` for domain concepts (UserId, RoomCode) → Value Objects or strongly-typed IDs.
 - **Missing Error Handling**: I/O boundaries (DB, Redis, HTTP, Socket) without `try/catch` or `Result<T>`.
@@ -104,10 +106,10 @@ code changes (git diff, `#Local Changes`, or PR diff).
 - `ref struct` for short-lived stack-allocated parsing contexts.
 - `System.Text.Json` with source-gen (`Utf8JsonReader`/`Utf8JsonWriter`) over Newtonsoft on hot paths.
 
-#### ✨ Modern C# 13 / .NET 10 Idioms
+#### ✨ Modern C# / .NET 10 Idioms
 - **Primary constructors** for simple DI receptors.
 - **Collection expressions** (`[item1, item2]`) over `new List<T> { }` or `new[] { }`.
-- **`params IEnumerable<T>`** (C# 13) to eliminate call-site array allocation.
+- **`params ReadOnlySpan<T>`** (C# 13) to eliminate call-site array allocation.
 - **`Lock` type** (C# 13 / .NET 9+) over `object` for monitor locking.
 - **`allows ref struct`** constraint for zero-allocation generic algorithms.
 - Raw string literals (`"""..."""`) for embedded JSON/SQL.
@@ -119,9 +121,9 @@ code changes (git diff, `#Local Changes`, or PR diff).
 - Order `struct` fields largest-to-smallest to minimize padding.
 
 #### 🛡️ Resilience for External Calls
-- New DB/HTTP calls without retry/timeout → Polly `ResiliencePipeline` (Retry + CircuitBreaker + Timeout).
-- State-mutating external calls missing idempotency keys.
-- Repeatedly-fetched reference data → `IDistributedCache` (Redis) with appropriate TTL.
+- New DB/HTTP calls without a timeout → add one. Flag a missing retry only for idempotent calls, and a missing circuit breaker only when the dependency is on a user-facing path with a stated SLA.
+- State-mutating external calls missing idempotency keys, where a replay would cause real damage.
+- Repeatedly-fetched reference data → cache with a TTL, only when the call volume is stated or visible in the code.
 
 ---
 

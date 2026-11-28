@@ -1,10 +1,10 @@
 ---
 name: csharp-dotnet-engineer
 description: |
-  High-performance game and web server backend engineering skill for C# / .NET 8·10. Covers Staff/Lead-level architecture design, code review, performance optimization, DDD, layered architecture, Event-Driven patterns, zero-allocation hot paths, concurrency, DB/cache strategy, and observability.
+  High-performance game and web server backend engineering skill for C# / .NET 8·10. Covers Staff/Lead-level architecture design, performance optimization, DDD, layered architecture, Event-Driven patterns, zero-allocation hot paths, concurrency, DB/cache strategy, and observability.
 
   ALWAYS use this skill for:
-  - C#, .NET, ASP.NET Core, gRPC, SignalR, WebSocket code writing or review
+  - C#, .NET, ASP.NET Core, gRPC, SignalR, WebSocket code writing (reviewing a diff or PR is csharp-dotnet-code-reviewer)
   - Game server / web API architecture design and component separation
   - Infrastructure layers: EF Core, Dapper, MySQL, Redis, Kafka
   - Performance optimization: Span/Memory/ArrayPool/Channel/ObjectPool
@@ -21,11 +21,11 @@ description: |
 
 - Write all explanations and reasoning in **Korean**.
 - Class names, method names, variables, pattern names, and framework names are kept in their **original English form** with backtick formatting (e.g., `PlayerSession`, `GetMatchResult()`).
-- Response order: ① Requirements & problem definition → ② High-level architecture → ③ Component breakdown (SRP boundaries) → ④ Memory/resource considerations → ⑤ Scalability, testing & operations.
+- Match the response to the request: a direct question gets the answer; a small change gets the code plus one or two lines on what changed and why; only a design request gets the full breakdown (requirements → architecture → components with SRP boundaries → resources, failure and consistency → testing and operations → what was deliberately not built).
 - Code must be written at **production-ready** quality, presenting only the essential parts (minimize boilerplate).
 - Add XML documentation (`///`) **only** to public APIs whose intent is not self-evident from the name and signature alone. Skip `///` on self-explanatory methods (e.g., `GetPlayerId()`, simple CRUD).
 - Inline comments (`//`) must explain **why**, never **what**. Omit them when the code is already self-documenting.
-- After generating or modifying code, always provide the corresponding `README.md` update content.
+- When a change alters behavior that `README.md` documents, say so in one line; write the README update only when asked.
 
 ---
 
@@ -64,7 +64,7 @@ Methods  : Verb+Noun        → GetPlayerSession, BroadcastMatchResult
 Booleans : is/has/can       → isConnected, hasExpired, canJoinMatch
 Constants: SCREAMING_SNAKE_CASE → MAX_PLAYER_COUNT, SESSION_TTL_SECONDS
 Classes  : Role-revealing   → MatchmakingService, InventoryRepository, SessionCoordinator
-           (God Object names like Helper, Manager are PROHIBITED)
+           (no Helper / Manager names: they hide what the class does)
 ```
 
 - Methods must comply with **SRP at 30 lines or fewer**.
@@ -88,12 +88,12 @@ catch (DbException ex)
     throw new InfrastructureException("Session retrieval failed", ex);
 }
 
-// ❌ Swallowing exceptions is absolutely prohibited
+// ❌ Don't swallow exceptions: the failure vanishes from logs and callers
 catch (Exception) { return null; }
 ```
 
-- **Strictly validate inputs** at service boundaries (FluentValidation or manual).
-- Expected failures (validation, not found) → `Result<T>`; unexpected errors → exceptions.
+- Validate untrusted input once, at the boundary (FluentValidation only if the project already uses it); don't re-validate in the domain.
+- Expected failures (validation, not found) → `Result<T>` where the project already uses it, otherwise the project's existing convention; unexpected errors → exceptions.
 
 ---
 
@@ -136,10 +136,11 @@ public async Task<Result<Session>> GetSessionAsync(Guid id, CancellationToken ct
 }
 
 // ✅ Parallel execution for independent I/O
-(PlayerDto player, InventoryDto inv) = await (
-    _playerSvc.GetAsync(id, ct),
-    _inventorySvc.GetAsync(id, ct)
-).WhenAll();  // leverage Task.WhenAll
+Task<PlayerDto> playerTask = _playerSvc.GetAsync(id, ct);
+Task<InventoryDto> inventoryTask = _inventorySvc.GetAsync(id, ct);
+await Task.WhenAll(playerTask, inventoryTask);
+PlayerDto player = await playerTask;
+InventoryDto inv = await inventoryTask;
 
 // ❌ Thread starvation — absolutely prohibited
 var result = someTask.Result;
@@ -191,7 +192,7 @@ var matches = await _db.Matches
 - For large datasets → use `cursor`-based pagination or streaming.
 - Minimize transaction scope.
 - `HttpClient` → reuse via `IHttpClientFactory`.
-- For all external I/O calls, apply **Timeout + Retry (exponential backoff) + Circuit Breaker** patterns.
+- Put a timeout on every external I/O call. Add retry (exponential backoff + jitter) only for idempotent operations, and a circuit breaker only when the dependency sits on a user-facing path with a stated SLA.
 
 ---
 
@@ -211,7 +212,7 @@ await _redis.SetStringAsync(
 ```
 
 - Key naming: follow the `{domain}:{entity}:{id}` format.
-- **Infinite TTL is absolutely prohibited** — always set an explicit expiry.
+- Always set an explicit expiry: entries without a TTL grow the cache without bound.
 
 ---
 
@@ -226,9 +227,9 @@ private static readonly Action<ILogger, Guid, Exception?> _logSessionExpired =
     LoggerMessage.Define<Guid>(LogLevel.Warning, new EventId(1001), "Session expired. PlayerId={PlayerId}");
 ```
 
-- Propagate `Activity` / `X-Correlation-Id` across gRPC and HTTP service boundaries.
-- Implement **Graceful Shutdown** hooks: save game state + safely drain connections.
-- Alert thresholds: trigger alerts when key metrics (RPS, error rate, p99 latency) exceed defined limits.
+- Where the project already has tracing, propagate `Activity` / `X-Correlation-Id` across gRPC and HTTP boundaries; don't add tracing infrastructure it doesn't have.
+- When a change adds in-memory game state or long-lived connections, say in one line how shutdown saves or drains them; build the shutdown hook when asked.
+- Add a metric or alert only for something with a stated SLA.
 
 ---
 
@@ -265,7 +266,7 @@ Example: GetPlayerSession_WhenExpired_ReturnsNull
 
 ## Detailed Reference Files
 
-For complex topics, read the following reference files using the `view` tool to obtain additional context:
+For complex topics, read the matching reference file:
 
 - `references/performance.md` — Advanced patterns for `Span<T>`, `Memory<T>`, `ArrayPool<T>`, `ObjectPool<T>`, `stackalloc`
 - `references/architecture.md` — DDD aggregates, event sourcing, CQRS, microservice extraction strategy

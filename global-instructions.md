@@ -132,8 +132,6 @@ Decide what "done" means before starting, then run the check — build, test, or
 - **New behavior** — tests for the stated cases only. No tests for hypothetical inputs.
 - **Refactor** — existing tests pass unchanged. If they had to change, it was not a refactor; say so.
 
-For a task of three or more steps, list the steps and their checks in one compact block before starting. For anything shorter, just do it.
-
 ---
 
 ## 8. Response format

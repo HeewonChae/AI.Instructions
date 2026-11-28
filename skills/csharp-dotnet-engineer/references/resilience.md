@@ -1,5 +1,7 @@
 # Resilience & Stability — Advanced Patterns
 
+> Scope: a timeout on every external call is the default. Use the retry patterns below only for idempotent operations, the circuit breaker only when the dependency sits on a user-facing path with a stated SLA, and graceful shutdown or health checks when the request asks for them.
+
 ## Retry + Exponential Backoff (Polly)
 
 ```csharp

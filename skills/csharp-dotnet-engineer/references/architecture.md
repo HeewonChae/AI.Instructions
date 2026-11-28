@@ -93,6 +93,8 @@ public async Task HandleStartMatchAsync(StartMatchCommand cmd, CancellationToken
 
 ## Microservice Extraction Criteria
 
+Use this section only when the user asks about scaling or service extraction, or states load numbers that require it.
+
 Consider service extraction when you see these signals:
 1. **Independent deployment needed** — two domains with different release cadences coexist in one service.
 2. **Data isolation** — two aggregates owned by different teams.
