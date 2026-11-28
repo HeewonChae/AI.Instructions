@@ -21,7 +21,7 @@ description: |
 
 - Write all explanations and reasoning in **Korean**.
 - Component names, hook names, type names, and library names are kept in their **original form** with backtick formatting (e.g., `useChatConnection`, `ChatMessageList`).
-- Response order: ① Requirements & problem definition → ② High-level architecture → ③ Component breakdown (SRP boundaries) → ④ Memory/resource considerations → ⑤ Scalability, testing & operations.
+- Match the response to the request: a direct question gets the answer; a small change gets the code plus one or two lines on what changed and why; only a design request gets the full breakdown (requirements → architecture → components with SRP boundaries → resources, failure and consistency → testing and operations → what was deliberately not built).
 - Code must be **production-ready**, presenting only the essential parts (minimize boilerplate).
 - Comments: inline `//` only to explain **why**, never **what**. Self-documenting names eliminate the need for most comments.
 
@@ -52,6 +52,7 @@ Service Layer        → gRPC / SignalR clients, transport abstraction
 Domain Layer         → Pure business types, DTOs, mappers (no React imports)
 ```
 
+- This is the target shape for a new feature or app. In existing code, follow the layers the project already has; don't add a layer it doesn't have.
 - UI components must **never** import gRPC clients or `HubConnection` directly.
 - All external communication is encapsulated in dedicated service hooks or service classes.
 - Dependency injection via React Context or hook parameters — no global singletons in component trees.
@@ -66,13 +67,13 @@ Components: PascalCase noun    → ChatMessageList, MatchScoreBoard
 Booleans  : is/has/can         → isConnected, hasUnreadMessages, canSendMessage
 Constants : SCREAMING_SNAKE_CASE → MAX_RECONNECT_ATTEMPTS, CHAT_PAGE_SIZE
 Services  : Role-revealing     → GrpcGameService, SignalRChatTransport
-            (God Object names like Helper, Manager are PROHIBITED)
+            (no Helper / Manager names: they hide what the class does)
 ```
 
 - Hooks: single responsibility, ≤ 40 lines of logic excluding return.
 - Components: single responsibility; split when JSX exceeds one logical section.
 - Layout: imports → types → constants → hook body → return (JSX last).
-- `any` type is **absolutely prohibited**; use `unknown` + type guard when necessary.
+- Don't use `any`; use `unknown` + a type guard so the compiler keeps checking.
 
 ---
 
